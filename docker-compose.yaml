@@ -1,0 +1,48 @@
+version: '3'
+
+services:
+  first-service:
+    build: ./first_service/
+    hostname: first_service
+    ports:
+      - "5000:5000"
+
+  second-service:
+    build: ./second_service/
+    hostname: second_service
+    depends_on:
+      - postgres
+    ports:
+      - "5001:5000"
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+
+  postgres:
+    image: postgres:13.1
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-q",
+          "-d",
+          "postgres",
+          "-U",
+          "root"
+        ]
+      timeout: 45s
+      interval: 10s
+      retries: 10
+    restart: always
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=maverick-db
+
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      # copy the sql script to create tables
+      - ./sql/:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
