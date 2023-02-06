@@ -24,14 +24,16 @@ def just_test():
 
 @app.route("/check", methods=["POST"])
 def check():
-    response = requests.get("http://second_service:5000/search_patient/1")
+    patient_id = request.form.get("patient_id", None)
+    text = request.form.get("text", None)
+    if not patient_id or not text:
+        return jsonify({"ok": False, "error": "Missing patient_id or text"})
+
+    response = requests.get(f"http://second_service:5000/search_patient/{patient_id}")
     status_code = response.status_code
     status_ok = response.ok
 
-    if status_ok and request.method == "POST":
-        patient_id = request.form.get("patient_id")
-        text = request.form.get("text")
-
+    if status_ok:
         if text:
             loaded_model = pickle.load(
                 open("./models/random_forest_model.pickle", "rb")
@@ -57,7 +59,7 @@ def check():
         else:
             return jsonify({"ok": False, "error": "text is empty"})
     else:
-        return jsonify({"ok": False, "error": response_content})
+        return jsonify({"ok": False, "error": "Something wrong"})
 
 
 if __name__ == "__main__":
